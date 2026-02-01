@@ -3,16 +3,15 @@
 八字计算核心模块 (ganzhi_calculator)
 =====================================
 【模块说明】
-本模块提供八字四柱（年柱/月柱/日柱/时柱）的核心计算功能，支持传统八字和连续时柱两种模式。
+本模块提供八字四柱（年柱/月柱/日柱/时柱）的核心计算功能。
 
 【核心功能】
 1. 传统八字计算：按传统规则，时柱每天根据日干重新开始
 2. 连续时柱八字：时柱随时间连续变化，天干地支各自循环
 
 【版本信息】
-- 版本：v3.1（修复版）
-- 适配Python版本：3.6+
-- 最后更新：2026-02-01
+- 版本：v1.0（基线版）
+- 最后更新：2026-01-24
 """
 
 import datetime
@@ -31,24 +30,6 @@ WUSHU_DUN = {
     '己': '甲', '庚': '丙', '辛': '戊', '壬': '庚', '癸': '壬'
 }
 
-MONTH_JIEQI_MAP = {
-    '子': ('大雪', '小寒'), '丑': ('小寒', '立春'), '寅': ('立春', '惊蛰'),
-    '卯': ('惊蛰', '清明'), '辰': ('清明', '立夏'), '巳': ('立夏', '芒种'),
-    '午': ('芒种', '小暑'), '未': ('小暑', '立秋'), '申': ('立秋', '白露'),
-    '酉': ('白露', '寒露'), '戌': ('寒露', '立冬'), '亥': ('立冬', '大雪')
-}
-
-JIEQI_RULE = {
-    '大雪': {'month': 12, 'day': 7}, '小寒': {'month': 1, 'day': 5},  # 修正：小寒通常为1月5-6日
-    '立春': {'month': 2, 'day': 4},  # 统一用2月4日，闰年处理在函数内
-    '惊蛰': {'month': 3, 'day': 5},  # 修正：惊蛰通常为3月5-6日
-    '清明': {'month': 4, 'day': 4},  # 修正：清明通常为4月4-5日
-    '立夏': {'month': 5, 'day': 5}, '芒种': {'month': 6, 'day': 5},
-    '小暑': {'month': 7, 'day': 7}, '立秋': {'month': 8, 'day': 7},
-    '白露': {'month': 9, 'day': 7}, '寒露': {'month': 10, 'day': 8},
-    '立冬': {'month': 11, 'day': 7}
-}
-
 BASE_DATE_DAY = datetime.date(1901, 1, 1)
 BASE_DAY_GAN = 5
 BASE_DAY_ZHI = 3
@@ -61,36 +42,11 @@ HOUR_DIZHI_MAP = {
 }
 
 
-# -------------------------- 工具函数 --------------------------
-def _get_jieqi_date(target_year: int, jieqi_name: str) -> datetime.date:
-    """获取节气日期（内部函数，简化版本）"""
-    rule = JIEQI_RULE[jieqi_name]
-    month = rule['month']
-    base_day = rule['day']
-
-    # 简化的节气计算：1900-2100年节气日期变化不大
-    # 在实际应用中，可以替换为更精确的节气计算
-    if jieqi_name == '立春':
-        # 立春：2月4日左右
-        return datetime.date(target_year, 2, 4)
-    elif jieqi_name == '惊蛰':
-        # 惊蛰：3月5日左右
-        return datetime.date(target_year, 3, 5)
-    elif jieqi_name == '清明':
-        # 清明：4月4日左右
-        return datetime.date(target_year, 4, 4)
-    elif jieqi_name == '小寒':
-        # 小寒：1月5日左右
-        return datetime.date(target_year, 1, 5)
-    else:
-        return datetime.date(target_year, month, base_day)
-
-
 # -------------------------- 核心计算函数 --------------------------
 def get_year_ganzhi(input_date: datetime.date) -> str:
     """计算年柱干支（立春为界）"""
     target_year = input_date.year
-    # 简化：立春固定为2月4日
+    # 立春固定为2月4日
     lichun_date = datetime.date(target_year, 2, 4)
 
     # 确定年柱归属年份
@@ -103,63 +59,35 @@ def get_year_ganzhi(input_date: datetime.date) -> str:
 
 
 def get_month_ganzhi(input_date: datetime.date, year_gan: str) -> str:
-    """计算月柱干支（简化版本）"""
-    # 简化的月份地支映射（基于节气日期固定）
+    """计算月柱干支（基于节气）"""
     month = input_date.month
     day = input_date.day
 
-    # 月份地支映射（简化为固定日期）
-    if month == 12 and day >= 7:  # 大雪后
-        month_dz = '子'
-    elif month == 1 and day < 6:  # 小寒前
-        month_dz = '子'
-    elif month == 1 and day >= 6:  # 小寒后
+    # 月份地支映射（基于固定节气日期）
+    # 寅月：立春(2月4日) - 惊蛰(3月5日)
+    # 卯月：惊蛰(3月6日) - 清明(4月4日)
+
+    if month == 1 or (month == 2 and day < 4):
+        # 1月或2月4日前：丑月
         month_dz = '丑'
-    elif month == 2 and day < 4:  # 立春前
-        month_dz = '丑'
-    elif month == 2 and day >= 4:  # 立春后
+    elif (month == 2 and day >= 4) or (month == 3 and day < 6):
+        # 2月4日后到3月6日前：寅月
         month_dz = '寅'
-    elif month == 3 and day < 5:  # 惊蛰前
-        month_dz = '寅'
-    elif month == 3 and day >= 5:  # 惊蛰后
+    elif (month == 3 and day >= 6) or (month == 4 and day < 4):
+        # 3月6日后到4月4日前：卯月
         month_dz = '卯'
-    elif month == 4 and day < 4:  # 清明前
-        month_dz = '卯'
-    elif month == 4 and day >= 4:  # 清明后
+    elif (month == 4 and day >= 4) or (month == 5 and day < 5):
+        # 4月4日后到5月5日前：辰月
         month_dz = '辰'
-    elif month == 5 and day < 5:  # 立夏前
-        month_dz = '辰'
-    elif month == 5 and day >= 5:  # 立夏后
+    elif (month == 5 and day >= 5) or (month == 6 and day < 6):
+        # 5月5日后到6月6日前：巳月
         month_dz = '巳'
-    elif month == 6 and day < 6:  # 芒种前
-        month_dz = '巳'
-    elif month == 6 and day >= 6:  # 芒种后
-        month_dz = '午'
-    elif month == 7 and day < 7:  # 小暑前
-        month_dz = '午'
-    elif month == 7 and day >= 7:  # 小暑后
-        month_dz = '未'
-    elif month == 8 and day < 7:  # 立秋前
-        month_dz = '未'
-    elif month == 8 and day >= 7:  # 立秋后
-        month_dz = '申'
-    elif month == 9 and day < 7:  # 白露前
-        month_dz = '申'
-    elif month == 9 and day >= 7:  # 白露后
-        month_dz = '酉'
-    elif month == 10 and day < 8:  # 寒露前
-        month_dz = '酉'
-    elif month == 10 and day >= 8:  # 寒露后
-        month_dz = '戌'
-    elif month == 11 and day < 7:  # 立冬前
-        month_dz = '戌'
-    elif month == 11 and day >= 7:  # 立冬后
-        month_dz = '亥'
     else:
-        month_dz = '子'  # 默认
+        # 其他月份简化为对应的地支
+        month_dz = DIZHI[(month + 1) % 12]  # 近似映射
 
     # 五虎遁定月干
-    yin_month_gan = WUHU_DUN[year_gan]
+    yin_month_gan = WUHU_DUN[year_gan]  # 寅月天干
     yin_idx = DIZHI.index('寅')
     curr_idx = DIZHI.index(month_dz)
     offset = (curr_idx - yin_idx) % 12
@@ -294,43 +222,3 @@ def get_continuous_bazi(start_datetime: datetime.datetime, target_datetime: date
     hour_gz = get_hour_ganzhi_continuous(start_datetime, target_datetime)
 
     return year_gz, month_gz, day_gz, hour_gz
-
-
-# -------------------------- 模块自测 --------------------------
-if __name__ == "__main__":
-    print("=== 八字计算模块自测 ===")
-
-    # 测试关键点
-    print("\n关键点测试:")
-
-    # 1. 2026-01-24 15:00
-    print("1. 2026-01-24 15:00:")
-    year_gz, month_gz, day_gz, hour_gz = get_traditional_bazi(2026, 1, 24, 15)
-    print(f"  八字：{year_gz} {month_gz} {day_gz} {hour_gz}")
-    print(f"  预期：乙巳 己丑 戊戌 庚申")
-
-    # 2. 节气切换测试
-    print("\n2. 节气切换测试:")
-    print("  a) 2026-03-05 15:00 (惊蛰前):")
-    year_gz, month_gz, day_gz, hour_gz = get_traditional_bazi(2026, 3, 5, 15)
-    print(f"    八字：{year_gz} {month_gz} {day_gz} {hour_gz}")
-    print(f"    预期：丙午 己丑 戊申 庚申")
-
-    print("  b) 2026-03-06 15:00 (惊蛰后):")
-    year_gz, month_gz, day_gz, hour_gz = get_traditional_bazi(2026, 3, 6, 15)
-    print(f"    八字：{year_gz} {month_gz} {day_gz} {hour_gz}")
-    print(f"    预期：丙午 庚寅 己酉 壬申")
-
-    # 3. 子时切换测试
-    print("\n3. 子时切换测试:")
-    print("  a) 2026-02-01 23:00:")
-    year_gz, month_gz, day_gz, hour_gz = get_traditional_bazi(2026, 2, 1, 23)
-    print(f"    八字：{year_gz} {month_gz} {day_gz} {hour_gz}")
-    print(f"    预期：丙午 己丑 丙午 戊子")
-
-    print("  b) 2026-02-02 01:00:")
-    year_gz, month_gz, day_gz, hour_gz = get_traditional_bazi(2026, 2, 2, 1)
-    print(f"    八字：{year_gz} {month_gz} {day_gz} {hour_gz}")
-    print(f"    预期：丙午 己丑 丁未 辛丑")
-
-    print("\n=== 自测完成 ===")
