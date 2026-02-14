@@ -182,3 +182,24 @@ def check_hour_continuity(bazi_sequence: list) -> list:
         prev_hour_gz = hour_gz
 
     return result
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("八字序列生成")
+    print("=" * 60)
+
+    start_date = datetime.date(2026, 1, 31)
+
+    # 生成连续时柱八字序列
+    print("a) 连续时柱八字序列 (从23:00开始，2天):")
+    bazi_list = generate_odd_hour_sequence(
+        start_date=start_date,
+        days=20,
+        hour_interval=2,
+        use_continuous=True
+    )
+
+    print(len(bazi_list))
+    print("\n" + "=" * 60)
+    print("示例完成！")
+    print("=" * 60)
