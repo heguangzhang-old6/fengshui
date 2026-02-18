@@ -82,9 +82,27 @@ def get_month_ganzhi(input_date: datetime.date, year_gan: str) -> str:
     elif (month == 5 and day >= 5) or (month == 6 and day < 6):
         # 5月5日后到6月6日前：巳月
         month_dz = '巳'
+    elif (month == 6 and day >= 6) or (month == 7 and day < 7):
+        # 6月6日后到7月7日前：午月
+        month_dz = '午'
+    elif (month == 7 and day >= 7) or (month == 8 and day < 7):
+        # 7月7日后到8月7日前：未月
+        month_dz = '未'
+    elif (month == 8 and day >= 7) or (month == 9 and day < 8):
+        # 8月7日后到9月8日前：申月
+        month_dz = '申'
+    elif (month == 9 and day >= 8) or (month == 10 and day < 8):
+        # 9月8日后到10月8日前：酉月
+        month_dz = '酉'
+    elif (month == 10 and day >= 8) or (month == 11 and day < 7):
+        # 10月8日后到11月7日前：戌月
+        month_dz = '戌'
+    elif (month == 11 and day >= 7) or (month == 12 and day < 7):
+        # 11月7日后到12月7日前：亥月
+        month_dz = '亥'
     else:
-        # 其他月份简化为对应的地支
-        month_dz = DIZHI[(month + 1) % 12]  # 近似映射
+        # 12月7日后到次年1月6日前：子月
+        month_dz = '子'
 
     # 五虎遁定月干
     yin_month_gan = WUHU_DUN[year_gan]  # 寅月天干

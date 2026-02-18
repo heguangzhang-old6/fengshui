@@ -188,18 +188,22 @@ if __name__ == "__main__":
     print("八字序列生成")
     print("=" * 60)
 
-    start_date = datetime.date(2026, 1, 31)
+    start_date = datetime.date(2026, 2, 16)
 
     # 生成连续时柱八字序列
     print("a) 连续时柱八字序列 (从23:00开始，2天):")
     bazi_list = generate_odd_hour_sequence(
         start_date=start_date,
-        days=20,
+        days=3,
         hour_interval=2,
         use_continuous=True
     )
 
-    print(len(bazi_list))
+    print(f'共生成八字{len(bazi_list)}个')
+    for item in bazi_list:
+        # print(item)
+        print(f"日期：{item.get('datetime','没发现日期')}\t八字：{item.get('bazi','没发现八字')}\t年柱：{item.get('year_gz','没发现年柱')}\t月柱：{item.get('month_gz','没发现月柱')}\t日柱：{item.get('day_gz','没发现日柱')}\t时柱：{item.get('hour_gz','没发现时柱')} ")
+
     print("\n" + "=" * 60)
     print("示例完成！")
     print("=" * 60)
